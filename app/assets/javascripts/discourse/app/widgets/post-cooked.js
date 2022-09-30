@@ -62,6 +62,7 @@ export default class PostCooked {
     this._insertQuoteControls(cookedDiv);
     this._showLinkCounts(cookedDiv);
     this._applySearchHighlight(cookedDiv);
+    this._insertLiveStatusOnMentions(cookedDiv);
     this._decorateAndAdopt(cookedDiv);
 
     return cookedDiv;
@@ -341,6 +342,57 @@ export default class PostCooked {
         }
       }
     });
+  }
+
+  _insertLiveStatusOnMentions(cookedDiv) {
+    // const quotes = html.querySelectorAll("aside.quote");
+    // if (quotes.length === 0) {
+    //   return;
+    // }
+    //
+    // this.originalQuoteContents = new Map();
+    //
+    // quotes.forEach((aside, index) => {
+    //   if (aside.dataset.post) {
+    //     const quoteId = `quote-id-${aside.dataset.topic}-${aside.dataset.post}-${index}`;
+    //
+    //     const blockquote = aside.querySelector("blockquote");
+    //     if (blockquote) {
+    //       blockquote.id = quoteId;
+    //     }
+    //
+    //     this._updateQuoteElements(aside, "chevron-down");
+    //     const title = aside.querySelector(".title");
+    //
+    //     if (!title) {
+    //       return;
+    //     }
+    //
+    //     // If post/topic is not found then display username, skip controls
+    //     if (aside.classList.contains("quote-post-not-found")) {
+    //       if (aside.dataset.username) {
+    //         title.innerHTML = escape(aside.dataset.username);
+    //       } else {
+    //         title.remove();
+    //       }
+    //
+    //       return;
+    //     }
+    //
+    //     // Unless it's a full quote, allow click to expand
+    //     if (!aside.dataset.full && !title.dataset.hasQuoteControls) {
+    //       title.addEventListener("click", (e) => {
+    //         if (e.target.closest("a")) {
+    //           return true;
+    //         }
+    //
+    //         this._toggleQuote(aside);
+    //       });
+    //
+    //       title.dataset.hasQuoteControls = true;
+    //     }
+    //   }
+    // });
   }
 
   _computeCooked() {
