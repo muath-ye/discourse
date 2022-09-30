@@ -4,10 +4,12 @@ import { ajax } from "discourse/lib/ajax";
 import highlightSearch from "discourse/lib/highlight-search";
 import { iconHTML } from "discourse-common/lib/icon-library";
 import { isValidLink } from "discourse/lib/click-track";
-import { number } from "discourse/lib/formatter";
+import { number, until } from "discourse/lib/formatter";
 import { spinnerHTML } from "discourse/helpers/loading-spinner";
 import { escape } from "pretty-text/sanitizer";
 import domFromString from "discourse-common/lib/dom-from-string";
+import getURL from "discourse-common/lib/get-url";
+import { emojiUnescape } from "discourse/lib/text";
 
 let _beforeAdoptDecorators = [];
 let _afterAdoptDecorators = [];
@@ -62,9 +64,93 @@ export default class PostCooked {
     this._insertQuoteControls(cookedDiv);
     this._showLinkCounts(cookedDiv);
     this._applySearchHighlight(cookedDiv);
+    this._addUserStatusToMentions(cookedDiv);
     this._decorateAndAdopt(cookedDiv);
 
     return cookedDiv;
+  }
+
+  destroy() {
+    this._stopTrackingMentionedUsersStatus();
+  }
+
+  _addUserStatusToMentions(cookedDiv) {
+    // todo andrei: should be a better way of detecting if it is preview
+    const helper = this.decoratorHelper;
+    const isComposerPreview = !helper;
+
+    if (!isComposerPreview) {
+      const post = helper.getModel();
+      this._trackMentionedUsersStatus(post);
+      post.mentioned_users.forEach((user) =>
+        this._applyFlairOnMention(cookedDiv, user)
+      );
+    }
+  }
+
+  // fixme andrei: rename
+  _applyFlairOnMention(postElement, user) {
+    const href = getURL(`/u/${user.username.toLowerCase()}`);
+    const mentions = postElement.querySelectorAll(`a.mention[href="${href}"]`);
+
+    mentions.forEach((mention) => {
+      this._updateUserStatus(mention, user.status);
+
+      // fixme andrei: figure out where to call `off`
+      user.on("status-changed", () =>
+        this._updateUserStatus(mention, user.status)
+      );
+    });
+  }
+
+  _updateUserStatus(mention, userStatus, currentUser) {
+    this._removeUserStatus(mention);
+    if (userStatus) {
+      this._insertUserStatus(mention, userStatus, currentUser);
+    }
+  }
+
+  _insertUserStatus(mention, userStatus, currentUser) {
+    const statusHtml = emojiUnescape(`:${userStatus.emoji}:`, {
+      class: "user-status",
+      title: this._statusTitle(userStatus, currentUser),
+    });
+    mention.insertAdjacentHTML("beforeend", statusHtml);
+  }
+
+  _removeUserStatus(mention) {
+    const statusElement = mention.querySelector("img.user-status");
+    if (statusElement) {
+      statusElement.remove();
+    }
+  }
+
+  _statusTitle(userStatus, currentUser) {
+    if (!userStatus.ends_at) {
+      return userStatus.description;
+    }
+
+    const _until = until(
+      userStatus.ends_at,
+      currentUser.timezone,
+      currentUser.locale
+    );
+    return `${userStatus.description} ${_until}`;
+  }
+
+  _trackMentionedUsersStatus(post) {
+    if (post.mentioned_users) {
+      post.mentioned_users.forEach((user) => {
+        user.trackStatus();
+      });
+    }
+  }
+
+  _stopTrackingMentionedUsersStatus() {
+    const post = this.decoratorHelper.getModel();
+    if (post.mentioned_users) {
+      post.mentioned_users.forEach((user) => user.stopTrackingStatus());
+    }
   }
 
   _decorateAndAdopt(cooked) {

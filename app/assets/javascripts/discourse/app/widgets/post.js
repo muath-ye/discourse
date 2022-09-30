@@ -882,6 +882,7 @@ export default createWidget("post", {
   },
 
   html(attrs) {
+    // console.log("rendering a post widget, model is:", this.model);
     if (attrs.cloaked) {
       return "";
     }

@@ -599,7 +599,7 @@ export default RestModel.extend({
   },
 
   prependPost(post) {
-    this._initUserModel(post);
+    this._initUserModels(post);
     const stored = this.storePost(post);
     if (stored) {
       const posts = this.posts;
@@ -610,7 +610,7 @@ export default RestModel.extend({
   },
 
   appendPost(post) {
-    this._initUserModel(post);
+    this._initUserModels(post);
     const stored = this.storePost(post);
     if (stored) {
       const posts = this.posts;
@@ -1247,7 +1247,7 @@ export default RestModel.extend({
     }
   },
 
-  _initUserModel(post) {
+  _initUserModels(post) {
     post.user = User.create({
       id: post.user_id,
       username: post.username,
@@ -1255,6 +1255,10 @@ export default RestModel.extend({
 
     if (post.user_status) {
       post.user.status = post.user_status;
+    }
+
+    if (post.mentioned_users) {
+      post.mentioned_users = post.mentioned_users.map((u) => User.create(u));
     }
   },
 
