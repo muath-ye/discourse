@@ -1,94 +1,77 @@
-import I18n from "I18n";
 import { withPluginApi } from "discourse/lib/plugin-api";
-import { cancel } from "@ember/runloop";
 import getURL from "discourse-common/lib/get-url";
 import { emojiUnescape } from "discourse/lib/text";
-import discourseLater from "discourse-common/lib/later";
+import { until } from "discourse/lib/formatter";
 
-function applyFlairOnMention(element, username) {
-  if (!element) {
-    return;
-  }
+// fixme andrei: rename
+function applyFlairOnMention(postElement, user, currentUser) {
+  const href = getURL(`/u/${user.username.toLowerCase()}`);
+  const mentions = postElement.querySelectorAll(`a.mention[href="${href}"]`);
 
-  const href = getURL(`/u/${username.toLowerCase()}`);
-  const mentions = element.querySelectorAll(`a.mention[href="${href}"]`);
+  // fixme andrei: start and stop tracking in widget, not here
+  user.trackStatus();
 
   mentions.forEach((mention) => {
-    if (!mention.querySelector(".on-holiday")) {
-      mention.insertAdjacentHTML(
-        "beforeend",
-        emojiUnescape(":mega:", { class: "on-holiday" })
-      );
-    }
-    mention.classList.add("on-holiday");
+    updateUserStatus(mention, user.status, currentUser);
+
+    // fixme andrei: figure out where to call `off`
+    user.on("status-changed", function () {
+      updateUserStatus(mention, user.status, currentUser);
+    });
   });
+}
+
+function updateUserStatus(mention, userStatus, currentUser) {
+  removeUserStatus(mention);
+  if (userStatus) {
+    insertUserStatus(mention, userStatus, currentUser);
+  }
+}
+
+function insertUserStatus(mention, userStatus, currentUser) {
+  const statusHtml = emojiUnescape(`:${userStatus.emoji}:`, {
+    class: "user-status",
+    title: statusTitle(userStatus, currentUser),
+  });
+  mention.insertAdjacentHTML("beforeend", statusHtml);
+}
+
+function removeUserStatus(mention) {
+  const statusElement = mention.querySelector("img.user-status");
+  if (statusElement) {
+    statusElement.remove();
+  }
+}
+
+function statusTitle(userStatus, currentUser) {
+  if (!userStatus.ends_at) {
+    return userStatus.description;
+  }
+
+  const _until = until(
+    userStatus.ends_at,
+    currentUser.timezone,
+    currentUser.locale
+  );
+  return `${userStatus.description} ${_until}`;
 }
 
 export default {
   name: "add-user-status-to-inline-mentions",
 
-  initialize() {
+  initialize(container) {
+    const currentUser = container.lookup("service:current-user");
+
     withPluginApi("0.8", (api) => {
-      const usernames = [
-        "a.prigorshnev_1001",
-        "a.prigorshnev_1011",
-        "admin1",
-        "andrei1",
-        "andrei2",
-        "andrei3",
-        "andrei4",
-        "andrei5",
-        "andrei6",
-        "anonymous",
-        "discobot",
-        "duplicate",
-        "duplicate10",
-        "duplicate100",
-        "duplicate2",
-        "duplicate200",
-        "ivan",
-        "ivan1",
-        "ivan2",
-        "kaptah",
-        "kaptah1",
-        "mjhwl",
-        "peter",
-        "peter1",
-        "peter2",
-        "peter4",
-        "peter5",
-        "system",
-        "user1",
-      ];
-
-      let flairHandler;
-
-      api.cleanupStream(() => cancel(flairHandler));
-
-      // if (api.decorateChatMessage) {
-      //   api.decorateChatMessage((message) => {
-      //     usernames.forEach((username) =>
-      //       applyFlairOnMention(message, username)
-      //     );
-      //   });
-      // }
-
       api.decorateCookedElement(
         (element, helper) => {
-          if (helper) {
-            // decorating a post
-            usernames.forEach((username) =>
-              applyFlairOnMention(element, username)
-            );
-          } else {
-            // decorating preview
-            cancel(flairHandler);
-            flairHandler = discourseLater(
-              () =>
-                usernames.forEach((username) =>
-                  applyFlairOnMention(element, username)
-                ),
-              1000
+          // todo andrei: should be a better way of detecting if it is preview
+          const isComposerPreview = !helper;
+
+          if (!isComposerPreview) {
+            const post = helper.getModel();
+            post.mentioned_users.forEach((user) =>
+              applyFlairOnMention(element, user, currentUser)
             );
           }
         },
