@@ -34,7 +34,9 @@ class TopicView
     :queued_posts_enabled,
     :personal_message,
     :can_review_topic,
-    :page
+    :page,
+    :mentioned_users,
+    :mentions
   )
   alias queued_posts_enabled? queued_posts_enabled
 
@@ -144,6 +146,9 @@ class TopicView
         @post_custom_fields = Post.custom_fields_for_ids(@posts.pluck(:id), allowed_fields)
       end
     end
+
+    parse_mentions
+    load_mentioned_users
 
     TopicView.preload(self)
 
@@ -515,21 +520,21 @@ class TopicView
   def reviewable_counts
     @reviewable_counts ||= begin
       sql = <<~SQL
-        SELECT
-          target_id,
-          MAX(r.id) reviewable_id,
-          COUNT(*) total,
-          SUM(CASE WHEN s.status = :pending THEN 1 ELSE 0 END) pending
-        FROM
-          reviewables r
-        JOIN
-          reviewable_scores s ON reviewable_id = r.id
-        WHERE
-          r.target_id IN (:post_ids) AND
-          r.target_type = 'Post' AND
-          COALESCE(s.reason, '') != 'category'
-        GROUP BY
-          target_id
+                               SELECT
+                                 target_id,
+                                 MAX(r.id) reviewable_id,
+                                 COUNT(*) total,
+                                 SUM(CASE WHEN s.status = :pending THEN 1 ELSE 0 END) pending
+                               FROM
+                                 reviewables r
+                               JOIN
+                                 reviewable_scores s ON reviewable_id = r.id
+                               WHERE
+                                 r.target_id IN (:post_ids) AND
+                                 r.target_type = 'Post' AND
+                                 COALESCE(s.reason, '') != 'category'
+                               GROUP BY
+                                 target_id
       SQL
 
       counts = {}
@@ -668,6 +673,24 @@ class TopicView
 
   def published_page
     @topic.published_page
+  end
+
+  def parse_mentions
+    @mentions = @posts
+      .pluck(:id, :raw)
+      .to_h { |p| [p[0], PostAnalyzer.new(p[1], nil).raw_mentions] }
+      .filter { |_, v| !v.empty? }
+  end
+
+  def load_mentioned_users
+    usernames = @mentions.values.flatten.uniq
+    mentioned_users = User.where(username: usernames)
+
+    if SiteSetting.enable_user_status
+      mentioned_users = mentioned_users.includes(:user_status)
+    end
+
+    @mentioned_users = mentioned_users.to_h { |u| [u.username, u] }
   end
 
   protected
@@ -871,17 +894,17 @@ class TopicView
     if @filter_upwards_post_id.present?
       post = Post.find(@filter_upwards_post_id)
       post_ids = DB.query_single(<<~SQL, post_id: post.id, topic_id: post.topic_id)
-      WITH RECURSIVE breadcrumb(id, reply_to_post_number) AS (
-            SELECT p.id, p.reply_to_post_number FROM posts AS p
-              WHERE p.id = :post_id
-            UNION
-              SELECT p.id, p.reply_to_post_number FROM posts AS p, breadcrumb
-                WHERE breadcrumb.reply_to_post_number = p.post_number
-                  AND p.topic_id = :topic_id
-          )
-      SELECT id from breadcrumb
-      WHERE id <> :post_id
-      ORDER by id
+        WITH RECURSIVE breadcrumb(id, reply_to_post_number) AS (
+              SELECT p.id, p.reply_to_post_number FROM posts AS p
+                WHERE p.id = :post_id
+              UNION
+                SELECT p.id, p.reply_to_post_number FROM posts AS p, breadcrumb
+                  WHERE breadcrumb.reply_to_post_number = p.post_number
+                    AND p.topic_id = :topic_id
+            )
+        SELECT id from breadcrumb
+        WHERE id <> :post_id
+        ORDER by id
       SQL
 
       post_ids = (post_ids[(0 - SiteSetting.max_reply_history)..-1] || post_ids)
