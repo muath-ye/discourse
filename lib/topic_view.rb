@@ -34,7 +34,8 @@ class TopicView
     :queued_posts_enabled,
     :personal_message,
     :can_review_topic,
-    :page
+    :page,
+    :mentioned_users
   )
   alias queued_posts_enabled? queued_posts_enabled
 
@@ -145,6 +146,8 @@ class TopicView
       end
     end
 
+    load_mentioned_users if @posts
+
     TopicView.preload(self)
 
     @draft_key = @topic.draft_key
@@ -153,6 +156,16 @@ class TopicView
     @can_review_topic = @guardian.can_review_topic?(@topic)
     @queued_posts_enabled = NewPostManager.queue_enabled? || category_require_reply_approval?
     @personal_message = @topic.private_message?
+  end
+
+  def load_mentioned_users
+    @mentioned_users = "hello! here will be mentioned users"
+
+    # todo > extract usernames
+    # cookedPosts = @posts.pluck(:cooked).join
+    # mentionedUsernames = ""
+    # todo > load users
+    # todo > attach mentioned users to its posts
   end
 
   def show_read_indicator?
