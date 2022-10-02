@@ -563,7 +563,9 @@ class PostSerializer < BasicPostSerializer
 
   def mentioned_users
     # todo andrei: make more readable
-    @topic_view.mentions[object.id].map{ |username| @topic_view.mentioned_users[username] }
+    mentions = @topic_view.mentions[object.id]
+    return [] unless mentions
+    mentions.map { |username| @topic_view.mentioned_users[username] }
   end
 
 private

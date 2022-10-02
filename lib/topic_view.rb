@@ -520,21 +520,21 @@ class TopicView
   def reviewable_counts
     @reviewable_counts ||= begin
       sql = <<~SQL
-        SELECT
-          target_id,
-          MAX(r.id) reviewable_id,
-          COUNT(*) total,
-          SUM(CASE WHEN s.status = :pending THEN 1 ELSE 0 END) pending
-        FROM
-          reviewables r
-        JOIN
-          reviewable_scores s ON reviewable_id = r.id
-        WHERE
-          r.target_id IN (:post_ids) AND
-          r.target_type = 'Post' AND
-          COALESCE(s.reason, '') != 'category'
-        GROUP BY
-          target_id
+                               SELECT
+                                 target_id,
+                                 MAX(r.id) reviewable_id,
+                                 COUNT(*) total,
+                                 SUM(CASE WHEN s.status = :pending THEN 1 ELSE 0 END) pending
+                               FROM
+                                 reviewables r
+                               JOIN
+                                 reviewable_scores s ON reviewable_id = r.id
+                               WHERE
+                                 r.target_id IN (:post_ids) AND
+                                 r.target_type = 'Post' AND
+                                 COALESCE(s.reason, '') != 'category'
+                               GROUP BY
+                                 target_id
       SQL
 
       counts = {}
@@ -679,33 +679,33 @@ class TopicView
     # todo andrei: use better regexp for usernames
     mention_regexp = /(?<=@)[\w_]+/
     @mentions = @posts
-                  .pluck(:id, :raw)
-                  .to_h { |p| [p[0], p[1].scan(mention_regexp)] }
-                  .filter { |_, v| !v.empty? }
+      .pluck(:id, :raw)
+      .to_h { |p| [p[0], p[1].scan(mention_regexp)] }
+      .filter { |_, v| !v.empty? }
   end
 
   def load_mentioned_users
     Rails.logger.warn "load_mentioned_users"
     andrei1_status = {
-      :emoji => "tea",
-      :description => "drinking tea",
-      :ends_at => "2022-10-10T19:00:00.000Z"
+      emoji: "tea",
+      description: "drinking tea",
+      ends_at: "2022-10-10T19:00:00.000Z"
     }
     andrei1 = {
-      :username => "andrei1",
-      :id => 21,
-      :status => andrei1_status
+      username: "andrei1",
+      id: 21,
+      status: andrei1_status
     }
 
     admin1_status = {
-      :emoji => "zzz",
-      :description => "napping",
-      :ends_at => "2022-10-03T19:00:00.000Z"
+      emoji: "zzz",
+      description: "napping",
+      ends_at: "2022-10-03T19:00:00.000Z"
     }
     admin1 = {
-      :username => "admin1",
-      :id => 1,
-      :status => admin1_status
+      username: "admin1",
+      id: 1,
+      status: admin1_status
     }
 
     @mentioned_users = {
@@ -915,17 +915,17 @@ class TopicView
     if @filter_upwards_post_id.present?
       post = Post.find(@filter_upwards_post_id)
       post_ids = DB.query_single(<<~SQL, post_id: post.id, topic_id: post.topic_id)
-      WITH RECURSIVE breadcrumb(id, reply_to_post_number) AS (
-            SELECT p.id, p.reply_to_post_number FROM posts AS p
-              WHERE p.id = :post_id
-            UNION
-              SELECT p.id, p.reply_to_post_number FROM posts AS p, breadcrumb
-                WHERE breadcrumb.reply_to_post_number = p.post_number
-                  AND p.topic_id = :topic_id
-          )
-      SELECT id from breadcrumb
-      WHERE id <> :post_id
-      ORDER by id
+        WITH RECURSIVE breadcrumb(id, reply_to_post_number) AS (
+              SELECT p.id, p.reply_to_post_number FROM posts AS p
+                WHERE p.id = :post_id
+              UNION
+                SELECT p.id, p.reply_to_post_number FROM posts AS p, breadcrumb
+                  WHERE breadcrumb.reply_to_post_number = p.post_number
+                    AND p.topic_id = :topic_id
+            )
+        SELECT id from breadcrumb
+        WHERE id <> :post_id
+        ORDER by id
       SQL
 
       post_ids = (post_ids[(0 - SiteSetting.max_reply_history)..-1] || post_ids)
