@@ -88,7 +88,8 @@ class PostSerializer < BasicPostSerializer
              :reviewable_score_count,
              :reviewable_score_pending_count,
              :user_suspended,
-             :user_status
+             :user_status,
+             :mentioned_users
 
   def initialize(object, opts)
     super(object, opts)
@@ -558,6 +559,28 @@ class PostSerializer < BasicPostSerializer
 
   def user_status
     UserStatusSerializer.new(object.user&.user_status, root: false)
+  end
+
+  def mentioned_users
+    andrei1_status = {}
+    andrei1_status[:emoji] = "tea"
+    andrei1_status[:description] = "drinking tea"
+    andrei1_status[:ends_at] = "2022-10-10T19:00:00.000Z"
+    andrei1 = {}
+    andrei1[:username] = "andrei1"
+    andrei1[:id] = 21
+    andrei1[:status] = andrei1_status
+
+    admin1_status = {}
+    admin1_status[:emoji] = "zzz"
+    admin1_status[:description] = "napping"
+    admin1_status[:ends_at] = "2022-10-01T19:00:00.000Z"
+    admin1 = {}
+    admin1[:username] = "admin1"
+    admin1[:id] = 1
+    admin1[:status] = admin1_status
+
+    [andrei1, admin1]
   end
 
 private
