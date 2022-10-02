@@ -562,25 +562,8 @@ class PostSerializer < BasicPostSerializer
   end
 
   def mentioned_users
-    andrei1_status = {}
-    andrei1_status[:emoji] = "tea"
-    andrei1_status[:description] = "drinking tea"
-    andrei1_status[:ends_at] = "2022-10-10T19:00:00.000Z"
-    andrei1 = {}
-    andrei1[:username] = "andrei1"
-    andrei1[:id] = 21
-    andrei1[:status] = andrei1_status
-
-    admin1_status = {}
-    admin1_status[:emoji] = "zzz"
-    admin1_status[:description] = "napping"
-    admin1_status[:ends_at] = "2022-10-01T19:00:00.000Z"
-    admin1 = {}
-    admin1[:username] = "admin1"
-    admin1[:id] = 1
-    admin1[:status] = admin1_status
-
-    [andrei1, admin1]
+    # todo andrei: make more readable
+    @topic_view.mentions[object.id].map{ |username| @topic_view.mentioned_users[username] }
   end
 
 private
@@ -613,5 +596,4 @@ private
   def post_actions
     @post_actions ||= (@topic_view&.all_post_actions || {})[object.id]
   end
-
 end

@@ -35,7 +35,8 @@ class TopicView
     :personal_message,
     :can_review_topic,
     :page,
-    :mentioned_users
+    :mentioned_users,
+    :mentions
   )
   alias queued_posts_enabled? queued_posts_enabled
 
@@ -681,6 +682,70 @@ class TopicView
 
   def published_page
     @topic.published_page
+  end
+
+  def mentioned_users
+    andrei1_status = {
+      :emoji => "tea",
+      :description => "drinking tea",
+      :ends_at => "2022-10-10T19:00:00.000Z"
+    }
+    andrei1 = {
+      :username => "andrei1",
+      :id => 21,
+      :status => andrei1_status
+    }
+
+    admin1_status = {
+      :emoji => "zzz",
+      :description => "napping",
+      :ends_at => "2022-10-01T19:00:00.000Z"
+    }
+    admin1 = {
+      :username => "admin1",
+      :id => 1,
+      :status => admin1_status
+    }
+
+    {
+      andrei1[:username] => andrei1,
+      admin1[:username] => admin1
+    }
+  end
+
+  def mentions
+    {
+      79 => [ "andrei1", "admin1"],
+      80 => [ "andrei1", "admin1"],
+      81 => [ "andrei1", "admin1"],
+      82 => [ "andrei1", "admin1"],
+      83 => [ "andrei1", "admin1"],
+      84 => [ "andrei1", "admin1"],
+      85 => [ "andrei1", "admin1"],
+      86 => [ "andrei1", "admin1"],
+      87 => [ "andrei1", "admin1"],
+      88 => [ "andrei1", "admin1"],
+      125 => [ "andrei1", "admin1"],
+      127 => [ "andrei1", "admin1"],
+      129 => [ "andrei1", "admin1"],
+      130 => [ "andrei1", "admin1"],
+      138 => [ "andrei1", "admin1"],
+      139 => [ "andrei1", "admin1"],
+      140 => [ "andrei1", "admin1"],
+      141 => [ "andrei1", "admin1"],
+      142 => [ "andrei1", "admin1"],
+      143 => [ "andrei1", "admin1"],
+      144 => [ "andrei1", "admin1"],
+      145 => [ "andrei1", "admin1"],
+      146 => [ "andrei1", "admin1"],
+      147 => [ "andrei1", "admin1"],
+      149 => [ "andrei1", "admin1"],
+      150 => [ "andrei1", "admin1"],
+      151 => [ "andrei1", "admin1"],
+      152 => [ "andrei1", "admin1"],
+      158 => [ "andrei1", "admin1"],
+      166 => [ "andrei1", "admin1"]
+    }
   end
 
   protected
