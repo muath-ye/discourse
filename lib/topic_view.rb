@@ -685,33 +685,14 @@ class TopicView
   end
 
   def load_mentioned_users
-    Rails.logger.warn "load_mentioned_users"
-    andrei1_status = {
-      emoji: "tea",
-      description: "drinking tea",
-      ends_at: "2022-10-10T19:00:00.000Z"
-    }
-    andrei1 = {
-      username: "andrei1",
-      id: 21,
-      status: andrei1_status
-    }
+    usernames = @mentions.values.flatten.uniq
+    mentioned_users = User.where(username: usernames)
 
-    admin1_status = {
-      emoji: "zzz",
-      description: "napping",
-      ends_at: "2022-10-03T19:00:00.000Z"
-    }
-    admin1 = {
-      username: "admin1",
-      id: 1,
-      status: admin1_status
-    }
+    if SiteSetting.enable_user_status
+      mentioned_users = mentioned_users.includes(:user_status)
+    end
 
-    @mentioned_users = {
-      andrei1[:username] => andrei1,
-      admin1[:username] => admin1
-    }
+    @mentioned_users = mentioned_users.to_h { |u| [u.username, u] }
   end
 
   protected
