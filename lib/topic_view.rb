@@ -676,11 +676,9 @@ class TopicView
   end
 
   def parse_mentions
-    # todo andrei: use better regexp for usernames
-    mention_regexp = /(?<=@)[\w_]+/
     @mentions = @posts
       .pluck(:id, :raw)
-      .to_h { |p| [p[0], p[1].scan(mention_regexp)] }
+      .to_h { |p| [p[0], PostAnalyzer.new(p[1], nil).raw_mentions] }
       .filter { |_, v| !v.empty? }
   end
 
