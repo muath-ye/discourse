@@ -562,11 +562,13 @@ class PostSerializer < BasicPostSerializer
   end
 
   def mentioned_users
-    mentions = @topic_view.mentions[object.id]
-    return [] unless mentions
-    mentions
-      .map { |username| @topic_view.mentioned_users[username] }
-      .map { |user| BasicUserWithStatusSerializer.new(user, root: false) }
+    if @topic_view && (mentions = @topic_view.mentions[object.id])
+      return mentions
+          .map { |username| @topic_view.mentioned_users[username] }
+          .map { |user| BasicUserWithStatusSerializer.new(user, root: false) }
+    end
+
+    []
   end
 
 private
