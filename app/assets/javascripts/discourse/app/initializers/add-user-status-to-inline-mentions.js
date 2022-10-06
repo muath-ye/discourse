@@ -8,9 +8,6 @@ function applyFlairOnMention(postElement, user, currentUser) {
   const href = getURL(`/u/${user.username.toLowerCase()}`);
   const mentions = postElement.querySelectorAll(`a.mention[href="${href}"]`);
 
-  // fixme andrei: start and stop tracking in widget, not here
-  user.trackStatus();
-
   mentions.forEach((mention) => {
     updateUserStatus(mention, user.status, currentUser);
 

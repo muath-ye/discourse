@@ -881,7 +881,20 @@ export default createWidget("post", {
     return classNames;
   },
 
+  didRenderWidget() {
+    this._trackMentionedUsersStatus();
+  },
+
+  willRerenderWidget() {
+    this._trackMentionedUsersStatus();
+  },
+
+  willDestroyWidget() {
+    this._stopTrackingMentionedUsersStatus();
+  },
+
   html(attrs) {
+    // console.log("rendering a post widget, model is:", this.model);
     if (attrs.cloaked) {
       return "";
     }
@@ -920,6 +933,20 @@ export default createWidget("post", {
     if (remaining === threshold) {
       this.dialog.alert(I18n.t("post.few_likes_left"));
       kvs.set({ key: "lastWarnedLikes", value: Date.now() });
+    }
+  },
+
+  _trackMentionedUsersStatus() {
+    if (this.model.mentioned_users) {
+      this.model.mentioned_users.forEach((user) => {
+        user.trackStatus();
+      });
+    }
+  },
+
+  _stopTrackingMentionedUsersStatus() {
+    if (this.model.mentioned_users) {
+      this.model.mentioned_users.forEach((user) => user.stopTrackingStatus());
     }
   },
 });
