@@ -75,7 +75,10 @@ export default {
             );
           }
         },
-        { id: "user-status" }
+        {
+          id: "user-status",
+          onlyStream: true,
+        }
       );
     });
   },
