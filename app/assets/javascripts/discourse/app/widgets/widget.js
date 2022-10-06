@@ -175,6 +175,8 @@ export default class Widget {
 
   destroy() {}
 
+  willDestroyWidget() {}
+
   get(propertyPath) {
     return get(this, propertyPath);
   }

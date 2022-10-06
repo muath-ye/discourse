@@ -81,6 +81,8 @@ export default Component.extend({
       this.appEvents.off(eventName, this, caller);
     });
     cancel(this._timeout);
+
+    traverseCustomWidgets(this._tree, (w) => w.willDestroyWidget());
   },
 
   afterRender() {},
