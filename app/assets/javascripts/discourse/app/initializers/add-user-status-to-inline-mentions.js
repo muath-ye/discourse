@@ -10,11 +10,6 @@ function applyFlairOnMention(postElement, user, currentUser) {
 
   mentions.forEach((mention) => {
     updateUserStatus(mention, user.status, currentUser);
-
-    // fixme andrei: figure out where to call `off`
-    user.on("status-changed", function () {
-      updateUserStatus(mention, user.status, currentUser);
-    });
   });
 }
 

@@ -940,13 +940,17 @@ export default createWidget("post", {
     if (this.model.mentioned_users) {
       this.model.mentioned_users.forEach((user) => {
         user.trackStatus();
+        user.on("status-changed", this, "scheduleRerender");
       });
     }
   },
 
   _stopTrackingMentionedUsersStatus() {
     if (this.model.mentioned_users) {
-      this.model.mentioned_users.forEach((user) => user.stopTrackingStatus());
+      this.model.mentioned_users.forEach((user) => {
+        user.stopTrackingStatus();
+        user.off("status-changed", this, "scheduleRerender");
+      });
     }
   },
 });
