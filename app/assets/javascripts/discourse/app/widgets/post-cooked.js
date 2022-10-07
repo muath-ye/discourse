@@ -4,10 +4,12 @@ import { ajax } from "discourse/lib/ajax";
 import highlightSearch from "discourse/lib/highlight-search";
 import { iconHTML } from "discourse-common/lib/icon-library";
 import { isValidLink } from "discourse/lib/click-track";
-import { number } from "discourse/lib/formatter";
+import { number, until } from "discourse/lib/formatter";
 import { spinnerHTML } from "discourse/helpers/loading-spinner";
 import { escape } from "pretty-text/sanitizer";
 import domFromString from "discourse-common/lib/dom-from-string";
+import getURL from "discourse-common/lib/get-url";
+import { emojiUnescape } from "discourse/lib/text";
 
 let _beforeAdoptDecorators = [];
 let _afterAdoptDecorators = [];
@@ -56,6 +58,7 @@ export default class PostCooked {
   }
 
   init() {
+    console.log("init PostCooked");
     this.originalQuoteContents = null;
     const cookedDiv = this._computeCooked();
 
@@ -64,6 +67,7 @@ export default class PostCooked {
     this._applySearchHighlight(cookedDiv);
     this._insertLiveStatusOnMentions(cookedDiv);
     this._decorateAndAdopt(cookedDiv);
+    this._addUserStatusToMentions(cookedDiv);
 
     return cookedDiv;
   }
@@ -90,6 +94,57 @@ export default class PostCooked {
       unhighlightHTML(html);
       this._highlighted = false;
     }
+  }
+
+  _addUserStatusToMentions(cooked) {
+    const post = this.decoratorHelper.getModel();
+    post.mentioned_users.forEach((user) =>
+      this._addUserStatusToMention(cooked, user)
+    );
+  }
+
+  _addUserStatusToMention(cooked, user) {
+    const href = getURL(`/u/${user.username.toLowerCase()}`);
+    const mentions = cooked.querySelectorAll(`a.mention[href="${href}"]`);
+
+    mentions.forEach((mention) => {
+      this._updateUserStatus(mention, user.status);
+    });
+  }
+
+  _updateUserStatus(mention, userStatus, currentUser) {
+    this._removeUserStatus(mention);
+    if (userStatus) {
+      this._insertUserStatus(mention, userStatus, currentUser);
+    }
+  }
+
+  _insertUserStatus(mention, userStatus, currentUser) {
+    const statusHtml = emojiUnescape(`:${userStatus.emoji}:`, {
+      class: "user-status",
+      title: this._statusTitle(userStatus, currentUser),
+    });
+    mention.insertAdjacentHTML("beforeend", statusHtml);
+  }
+
+  _removeUserStatus(mention) {
+    const statusElement = mention.querySelector("img.user-status");
+    if (statusElement) {
+      statusElement.remove();
+    }
+  }
+
+  _statusTitle(userStatus, currentUser) {
+    if (!userStatus.ends_at) {
+      return userStatus.description;
+    }
+
+    const _until = until(
+      userStatus.ends_at,
+      currentUser.timezone,
+      currentUser.locale
+    );
+    return `${userStatus.description} ${_until}`;
   }
 
   _showLinkCounts(html) {

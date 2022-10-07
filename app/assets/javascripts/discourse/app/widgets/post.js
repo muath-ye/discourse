@@ -457,6 +457,7 @@ createWidget("post-contents", {
   },
 
   html(attrs, state) {
+    console.log("executing html() on post-contents");
     let result = [
       new PostCooked(attrs, new DecoratorHelper(this), this.currentUser),
     ];
