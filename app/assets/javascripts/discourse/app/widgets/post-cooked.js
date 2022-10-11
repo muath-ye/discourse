@@ -103,17 +103,17 @@ export default class PostCooked {
     });
   }
 
-  _updateUserStatus(mention, userStatus, currentUser) {
+  _updateUserStatus(mention, status) {
     this._removeUserStatus(mention);
-    if (userStatus) {
-      this._insertUserStatus(mention, userStatus, currentUser);
+    if (status) {
+      this._insertUserStatus(mention, status);
     }
   }
 
-  _insertUserStatus(mention, userStatus, currentUser) {
-    const statusHtml = emojiUnescape(`:${userStatus.emoji}:`, {
+  _insertUserStatus(mention, status) {
+    const statusHtml = emojiUnescape(`:${status.emoji}:`, {
       class: "user-status",
-      title: this._statusTitle(userStatus, currentUser),
+      title: this._statusTitle(status),
     });
     mention.insertAdjacentHTML("beforeend", statusHtml);
   }
@@ -125,17 +125,17 @@ export default class PostCooked {
     }
   }
 
-  _statusTitle(userStatus, currentUser) {
-    if (!userStatus.ends_at) {
-      return userStatus.description;
+  _statusTitle(status) {
+    if (!status.ends_at) {
+      return status.description;
     }
 
     const _until = until(
-      userStatus.ends_at,
-      currentUser.timezone,
-      currentUser.locale
+      status.ends_at,
+      this.currentUser.timezone,
+      this.currentUser.locale
     );
-    return `${userStatus.description} ${_until}`;
+    return `${status.description} ${_until}`;
   }
 
   _trackMentionedUsersStatus(post) {
