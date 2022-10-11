@@ -2684,14 +2684,13 @@ RSpec.describe TopicsController do
       expect(response.status).to eq(200)
     end
 
-    context "mentions" do
+    context "with mentions" do
       fab!(:post) { Fabricate(:post, user: post_author1) }
       fab!(:topic) { post.topic }
       fab!(:post2) { Fabricate(:post, user: post_author2, topic: topic) }
 
       it "returns mentions" do
         post2.raw = "I am mentioning mentioning mnentioning @#{post_author1.username}."
-        #post2.cooked = "<p>I am mentioning <a class='mention' href='/u/#{post_author1.username}'>@#{post_author1.username}</a>.</p>"
         post2.save!
 
         get "/t/#{topic.slug}/#{topic.id}.json"
@@ -2699,12 +2698,12 @@ RSpec.describe TopicsController do
         expect(response.status).to eq(200)
 
         json = response.parsed_body
-        expect(json["post_stream"]["posts"][0]["mentioned_users"].length).to be 1
+        expect(json["post_stream"]["posts"][1]["mentioned_users"].length).to be(1)
 
-        mentioned_user = json["post_stream"]["posts"][0]["mentioned_users"][0]
-        expect(mentioned_user["id"]).to be user.id
-        expect(mentioned_user["name"]).to be user.name
-        expect(mentioned_user["username"]).to be user.username
+        mentioned_user = json["post_stream"]["posts"][1]["mentioned_users"][0]
+        expect(mentioned_user["id"]).to be(post_author1.id)
+        expect(mentioned_user["name"]).to eq(post_author1.name)
+        expect(mentioned_user["username"]).to eq(post_author1.username)
       end
     end
 
