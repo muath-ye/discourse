@@ -2,9 +2,10 @@
 
 module BackupRestoreNew
   module Logger
-    class Default < Base
+    class WebLogger < BaseLogger
       # @param operation "backup" or "restore"
       def initialize(user_id, client_id, operation)
+        super()
         @user_id = user_id
         @client_id = client_id
         @operation = operation
@@ -20,6 +21,11 @@ module BackupRestoreNew
         timestamp = create_timestamp
         publish_log(message, timestamp)
         save_log(message, timestamp)
+
+        case level
+        when Logger::WARNING then @warning_count += 1
+        when Logger::ERROR then @error_count += 1
+        end
       end
 
       private

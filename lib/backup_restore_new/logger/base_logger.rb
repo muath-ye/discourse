@@ -6,7 +6,7 @@ module BackupRestoreNew
     WARNING = :warning
     ERROR = :error
 
-    class Base
+    class BaseLogger
       attr_reader :logs
 
       def initialize
